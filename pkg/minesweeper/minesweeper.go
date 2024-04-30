@@ -16,6 +16,7 @@ type Game struct {
 	params Params
 	board  []Cell
 	state  GameState
+	marked int
 }
 
 func NewGame(params Params) (Game, error) {
@@ -29,6 +30,7 @@ func NewGame(params Params) (Game, error) {
 func (g *Game) Init() {
 	g.state = Init
 	g.board = make([]Cell, g.params.Rows*g.params.Cols)
+	g.marked = 0
 	g.addMines()
 	g.applyCounts()
 	g.state = Running
@@ -51,11 +53,28 @@ func (g Game) Cells() [][]CellValue {
 		coord := g.getCellCoordinate(i)
 		if g.state != Running || g.board[i].pressed {
 			rows[coord.Row][coord.Col] = g.board[i].value
+		} else if g.board[i].marked {
+			rows[coord.Row][coord.Col] = Marked
 		} else {
 			rows[coord.Row][coord.Col] = Hidden
 		}
 	}
 	return rows
+}
+
+func (g Game) Marked() int {
+	return g.marked
+}
+
+func (g *Game) ToggleMark(coord CellCoordinate) {
+	idx := g.getRealIdx(coord)
+
+	if g.board[idx].marked {
+		g.unmark(coord)
+		return
+	}
+
+	g.mark(coord)
 }
 
 func (g *Game) Press(coord CellCoordinate) {
@@ -69,6 +88,7 @@ func (g *Game) Press(coord CellCoordinate) {
 	}
 
 	g.board[idx].pressed = true
+	g.unmark(coord)
 	if g.board[idx].value == Mine {
 		g.state = Lost
 		return
@@ -125,5 +145,34 @@ func (g *Game) applyCounts() {
 				}
 			}
 		}
+	}
+}
+
+func (g *Game) mark(coord CellCoordinate) {
+	if g.state != Running {
+		return
+	}
+
+	idx := g.getRealIdx(coord)
+	if g.board[idx].pressed {
+		return
+	}
+
+	if !g.board[idx].marked {
+		g.board[idx].marked = true
+		g.marked++
+	}
+}
+
+func (g *Game) unmark(coord CellCoordinate) {
+	if g.state != Running {
+		return
+	}
+
+	idx := g.getRealIdx(coord)
+
+	if g.board[idx].marked {
+		g.board[idx].marked = false
+		g.marked--
 	}
 }
