@@ -34,6 +34,30 @@ func (g *Game) Init() {
 	g.state = Running
 }
 
+func (g Game) State() GameState {
+	return g.state
+}
+
+func (g Game) Params() Params {
+	return g.params
+}
+
+func (g Game) Cells() [][]CellValue {
+	rows := make([][]CellValue, g.params.Rows)
+	for i := range rows {
+		rows[i] = make([]CellValue, g.params.Cols)
+	}
+	for i := range g.board {
+		coord := g.getCellCoordinate(i)
+		if g.state != Running || g.board[i].pressed {
+			rows[coord.Row][coord.Col] = g.board[i].value
+		} else {
+			rows[coord.Row][coord.Col] = Hidden
+		}
+	}
+	return rows
+}
+
 func (g *Game) Press(coord CellCoordinate) {
 	if g.state != Running {
 		return
@@ -69,10 +93,6 @@ func (g Game) isWon() bool {
 		}
 	}
 	return g.state == Running // cuts off Loses and weird configrations, may change later
-}
-
-func (g Game) State() GameState {
-	return g.state
 }
 
 func (g *Game) addMines() {

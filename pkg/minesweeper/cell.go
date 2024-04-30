@@ -3,7 +3,8 @@ package minesweeper
 type CellValue int
 
 const (
-	Mine CellValue = -1
+	Hidden CellValue = -2 + iota
+	Mine
 )
 
 type Cell struct {
